@@ -261,46 +261,74 @@ export class CNCMachine extends THREE.Group {
             this.spindle.update(delta);
         }
 
-        // Demo Animation: Slowly rotate Turntable (B) and Trunnion (A)
-        if (this.trunnionTable) {
-            const time = this.scene.children[0] ? Date.now() * 0.001 : 0; // Fallback time source
-
-            // Rotate Turntable Clockwise (Negative degrees)
-            // Speed: 20 degrees per second
-            this.axisPositions.b -= 20 * delta;
-            this.trunnionTable.setBAngle(this.axisPositions.b);
-
-            // Oscillate Trunnion (A)
-            // Range: +/- 30 degrees
-            // Speed: 0.5 Hz
-            // Using a persistent time counter would be better, but accumulating delta works too.
-            // Let's rely on internal state if we had it, but simplified:
-            const osc = Math.sin(Date.now() * 0.001) * 30;
-            this.axisPositions.a = osc;
-            this.trunnionTable.setAAngle(this.axisPositions.a);
+        // Lazy initialization of Tracker Visual
+        if (this.trunnionTable && this.trunnionTable.platformGroup && !this.tracker) {
+            this.tracker = new THREE.Mesh(
+                new THREE.SphereGeometry(0.02),
+                new THREE.MeshBasicMaterial({ color: 0xff0000 })
+            );
+            this.tracker.position.set(0.5, 0.08, 0); // Edge of platter
+            this.trunnionTable.platformGroup.add(this.tracker);
         }
 
-        // Demo Animation: Oscillate Z-Axis
-        if (this.zAxis) {
-            const zOsc = Math.sin(Date.now() * 0.0015) * 350; // Range +/- 350mm
-            this.axisPositions.z = zOsc;
-            this.zAxis.setPosition(zOsc);
-        }
+        // --- SIMULTANEOUS 5-AXIS TRACKING DEMO ---
+        if (this.trunnionTable && this.xAxis && this.yAxis && this.zAxis) {
+            const time = Date.now() * 0.0005; // Slower time
 
-        // Demo Animation: Oscillate X and Y Axes
-        if (this.xAxis) {
-            const xOsc = Math.sin(Date.now() * 0.001) * 350; // Increased to show reach
-            this.axisPositions.x = xOsc;
-            this.xAxis.setPosition(xOsc);
-        }
-        if (this.yAxis) {
-            const yOsc = Math.cos(Date.now() * 0.001) * 250; // Increased to show reach
-            this.axisPositions.y = yOsc;
-            this.yAxis.setPosition(yOsc);
-        }
+            // 1. Oscillate Rotary Axes
+            // A-Axis: Tilt +/- 30 degrees (Trunnion)
+            const aTarget = Math.sin(time) * 30;
+            this.trunnionTable.setAAngle(aTarget);
+            this.axisPositions.a = aTarget;
 
-        // Update any animations or movements
-        // (smooth interpolation of axis movements could go here)
+            // B-Axis: Rotate Continuous (Turntable)
+            const bTarget = (time * 60) % 360; // 60 deg/sec
+            this.trunnionTable.setBAngle(bTarget);
+            this.axisPositions.b = bTarget;
+
+            // 2. Kinematics Logic
+            // Calculate vector 'v' from X-Carriage Origin to Tracker
+            const scale = 0.6;
+            const v = new THREE.Vector3(0.5, 0.08, 0).multiplyScalar(scale); // Tracker Local
+
+            // Apply B (Around Y)
+            v.applyAxisAngle(new THREE.Vector3(0, 1, 0), THREE.MathUtils.degToRad(bTarget));
+            // Apply Platform Offset (0, -0.2, 0)
+            v.add(new THREE.Vector3(0, -0.2, 0).multiplyScalar(scale));
+            // Apply A (Around X)
+            v.applyAxisAngle(new THREE.Vector3(1, 0, 0), THREE.MathUtils.degToRad(aTarget));
+            // Apply Cradle Pivot (0, 0.6, 0)
+            v.add(new THREE.Vector3(0, 0.6, 0).multiplyScalar(scale));
+            // Apply Trunnion Base (0, 0.05, 0)
+            v.add(new THREE.Vector3(0, 0.05, 0).multiplyScalar(scale));
+
+            // 'v' is now offset from X-Carriage (Axis Intersect?)
+
+            // X-Axis Strategy: Keep Tracker at X=0.
+            // WorldX_Tracker = X_Pos + v.x. 
+            // 0 = X_Pos + v.x  =>  X_Pos = -v.x
+            const targetX = -v.x * 1000;
+            this.xAxis.setPosition(targetX);
+            this.axisPositions.x = targetX;
+
+            // Y-Axis Strategy: Keep Tracker at Spindle Z.
+            // Spindle Z World ~ 0.05 (Rail -0.8 + Arm 0.85).
+            // WorldZ_Tracker = Y_Pos + v.z. (Assuming Y-Axis moves in World Z).
+            // User indicated Reversal: Y_Pos = v.z - 0.05.
+            const targetY = (v.z - 0.05) * 1000;
+            this.yAxis.setPosition(targetY);
+            this.axisPositions.y = targetY;
+
+            // Z-Axis Strategy: Keep Spindle Tip at Tracker Height.
+            // TipWorldY = TrackerWorldY.
+            // TipWorldY = (RailY 2.0) + Z_Pos + (TipOffset -0.85). = 1.15 + Z_Pos.
+            // TrackerWorldY = (BaseY ~0.8) + v.y.
+            // 1.15 + Z_Pos = 0.8 + v.y.
+            // Z_Pos = v.y + 0.8 - 1.15 = v.y - 0.35.
+            const targetZ = (v.y - 0.35) * 1000;
+            this.zAxis.setPosition(targetZ);
+            this.axisPositions.z = targetZ;
+        }
     }
 
     // Emergency stop
