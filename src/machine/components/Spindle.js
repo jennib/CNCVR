@@ -10,97 +10,85 @@ export class Spindle extends THREE.Group {
     }
 
     createSpindle() {
-        // The Spindle Head (Ram)
-        // This is the heavy casting that moves up/down (Z-axis)
-        const ramWidth = 0.25;
-        const ramDepth = 0.3;
-        const ramHeight = 0.4;
+        // 1. Connection Arm (The "Box" connecting Z to Spindle)
+        // More Slender: Height 0.2, Width 0.15, Length 0.75.
+        const armGeo = new THREE.BoxGeometry(0.2, 0.15, 0.75);
+        const armMat = new THREE.MeshStandardMaterial({
+            color: 0x222222,
+            roughness: 0.6,
+            metalness: 0.4
+        });
+        const arm = new THREE.Mesh(armGeo, armMat);
+        // Center Vertically at -0.05 (Top +0.05).
+        // Center Z at 0.375 (Extends 0 to 0.75).
+        arm.position.set(-0.05, 0, 0.375);
+        this.add(arm);
 
-        const ramGeometry = new THREE.BoxGeometry(ramWidth, ramHeight, ramDepth);
-        const ramMaterial = new THREE.MeshStandardMaterial({
-            color: 0x444444, // Cast iron grey
+        // 2. Main Spindle Body (Compact Vertical Column)
+        // Shortened to 0.5m. Ends flush with Arm Top.
+        const bodyGeo = new THREE.BoxGeometry(0.5, 0.22, 0.22);
+        const bodyMat = new THREE.MeshStandardMaterial({
+            color: 0x333333,
             roughness: 0.7,
             metalness: 0.3
         });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        // Top Aligned with Arm Top (+0.05).
+        // Height 0.5. Center = 0.05 - 0.25 = -0.2.
+        body.position.set(-0.2, 0, 0.85);
+        this.add(body);
 
-        const ram = new THREE.Mesh(ramGeometry, ramMaterial);
-        ram.position.y = 0.2; // Centered vertically relative to mount
-        this.add(ram);
+        // 3. Motor Fan/Cover (Top)
+        const motorGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.15, 32);
+        const motorMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+        const motor = new THREE.Mesh(motorGeo, motorMat);
+        motor.rotation.z = -Math.PI / 2;
+        motor.position.set(0.125, 0, 0.85); // Flush on top (+0.05 + half-height 0.075)
+        this.add(motor);
 
-        // Detailed Spindle Cartridge (The shiny precision part)
-        const cartridgeRadius = 0.09;
-        const cartridgeHeight = 0.15;
-        const cartridgeGeo = new THREE.CylinderGeometry(cartridgeRadius, cartridgeRadius * 0.8, cartridgeHeight, 32);
-        const cartridgeMat = new THREE.MeshStandardMaterial({
-            color: 0xeeeeee,
-            roughness: 0.2,
-            metalness: 0.8
-        });
-        const cartridge = new THREE.Mesh(cartridgeGeo, cartridgeMat);
-        cartridge.position.y = -0.075; // Protruding from bottom of Ram
-        this.add(cartridge);
+        // 4. Spindle Cartridge (Bottom Stick-out)
+        const housingGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.1, 32);
+        const housingMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.6 });
+        const housing = new THREE.Mesh(housingGeo, housingMat);
+        housing.rotation.z = -Math.PI / 2;
+        housing.position.set(-0.5, 0, 0.85); // Below Body (-0.45 - half-height 0.05)
+        this.add(housing);
 
-        // Rotating Spindle Nose
+        // 5. Rotating Spindle Nose Group
         this.spindleNose = new THREE.Group();
-        this.spindleNose.position.y = -0.15; // Bottom of cartridge
+        this.spindleNose.position.set(-0.575, 0, 0.85); // Below housing
+        this.spindleNose.rotation.z = -Math.PI / 2;
+        this.add(this.spindleNose);
 
-        const noseGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 32);
-        const noseMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.5, roughness: 0.5 });
+        // Main Nose Cylinder
+        const noseGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.05, 32);
+        const noseMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.5, roughness: 0.5 });
         const nose = new THREE.Mesh(noseGeo, noseMat);
         this.spindleNose.add(nose);
 
-        // Drive Dogs
-        const dogGeo = new THREE.BoxGeometry(0.025, 0.03, 0.025);
-        const dog1 = new THREE.Mesh(dogGeo, noseMat);
-        dog1.position.set(0.055, -0.02, 0);
-        this.spindleNose.add(dog1);
-        const dog2 = new THREE.Mesh(dogGeo, noseMat);
-        dog2.position.set(-0.055, -0.02, 0);
-        this.spindleNose.add(dog2);
+        // ER Nut 
+        const nutGeo = new THREE.CylinderGeometry(0.05, 0.045, 0.03, 6);
+        const nutMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+        const nut = new THREE.Mesh(nutGeo, nutMat);
+        nut.position.y = -0.04;
+        this.spindleNose.add(nut);
 
-        this.add(this.spindleNose);
+        // ER Collet
+        const colletGeo = new THREE.CylinderGeometry(0.025, 0.015, 0.03, 16);
+        const colletMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+        const collet = new THREE.Mesh(colletGeo, colletMat);
+        collet.position.y = -0.07;
+        this.spindleNose.add(collet);
 
-        // Tool Holder (CAT40/BT40 visual)
+        // Tool Holder
         this.toolHolder = new THREE.Group();
-        this.toolHolder.position.y = -0.025; // Relative to nose
-
-        // V-Flange
-        const flangeGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.015, 32);
-        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1.0, roughness: 0.1 });
-        const flange = new THREE.Mesh(flangeGeo, chromeMat);
-        this.toolHolder.add(flange);
-
+        this.toolHolder.position.y = -0.085;
         this.spindleNose.add(this.toolHolder);
 
-        // Coolant Nozzles (Flexible orange pipes)
-        const nozzleGroup = new THREE.Group();
-        const nozzleMat = new THREE.MeshStandardMaterial({ color: 0xff4400, roughness: 0.8 });
-
-        // Left Nozzle
-        const nozzleL = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.15), nozzleMat);
-        nozzleL.position.set(-0.15, -0.1, 0.15);
-        nozzleL.rotation.z = -0.5;
-        nozzleL.rotation.x = 0.5;
-        nozzleGroup.add(nozzleL);
-
-        // Right Nozzle
-        const nozzleR = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.15), nozzleMat);
-        nozzleR.position.set(0.15, -0.1, 0.15);
-        nozzleR.rotation.z = 0.5;
-        nozzleR.rotation.x = 0.5;
-        nozzleGroup.add(nozzleR);
-
-        this.add(nozzleGroup);
-
-        // Pneumatic/Hydraulic lines on top
-        const cableGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.3);
-        const cableMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-        const cable = new THREE.Mesh(cableGeo, cableMat);
-        cable.position.set(0.05, 0.55, -0.1);
-        this.add(cable);
-
+        // Default Tool
         this.setTool('endmill', 10);
     }
+
 
     setTool(toolType, diameter) {
         const existingTool = this.toolHolder.getObjectByName('currentTool');

@@ -37,20 +37,7 @@ export class MachineBase extends THREE.Group {
         bed.position.y = bedHeight / 2;
         this.add(bed);
 
-        // 2. The Column (C-Frame Back)
-        // Massive vertical tower rising from the back of the bed
-        const colWidth = 1.0;
-        const colHeight = 2.5;
-        const colDepth = 0.8;
-
-        const columnGeo = new THREE.BoxGeometry(colWidth, colHeight, colDepth);
-        const column = new THREE.Mesh(columnGeo, castIronMaterial);
-
-        // Position: Centered X, Behind the main workspace
-        // If bed is centered at 0, its back is at -1.1. 
-        // We want the column to overlap slightly or be flush.
-        column.position.set(0, colHeight / 2, -0.8);
-        this.add(column);
+        // Column and Name Plate removed
 
         // 3. Chip Tray / Pan
         // Wide basin to catch metal chips
@@ -74,21 +61,5 @@ export class MachineBase extends THREE.Group {
             foot.position.set(pos[0], 0.075, pos[1]);
             this.add(foot);
         });
-
-        // Electrical cabinet removed
-
-        // Name Plate removed by implication or strictly?
-        // User said "get rid of ... large white box to the right". 
-        // That matches the cabinet.
-        // Also "cuge floating above the turntable".
-        // "Cuge" likely means "Cube".
-        // That matches the Workpiece.
-
-        // 6. Name Plate / Logo
-        const plateGeo = new THREE.BoxGeometry(0.6, 0.2, 0.02);
-        const plateMat = new THREE.MeshStandardMaterial({ color: 0xcc0000 });
-        const plate = new THREE.Mesh(plateGeo, plateMat);
-        plate.position.set(0, 1.8, -0.8 + colDepth / 2 + 0.01); // Front of column
-        this.add(plate);
     }
 }
