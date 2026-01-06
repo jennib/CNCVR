@@ -122,14 +122,14 @@ export class Enclosure extends THREE.Group {
         this.add(roof);
 
         // 5. Lower Chip Guard / Skirt (Stainless Look)
-        const skirtGeo = new THREE.BoxGeometry(3.1, 0.6, 2.7);
+        const skirtGeo = new THREE.BoxGeometry(3.1, 0.55, 2.7);
         const skirtMat = new THREE.MeshStandardMaterial({
             color: 0x555555,
             roughness: 0.5,
             metalness: 0.6
         });
         const skirt = new THREE.Mesh(skirtGeo, skirtMat);
-        skirt.position.y = 0.3; // Covers the base area
+        skirt.position.y = 0.275; // Slightly lower than bed (0.6) to avoid Z-fighting
         this.add(skirt);
 
         this.createSafetyLights();

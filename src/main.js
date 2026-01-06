@@ -66,7 +66,7 @@ class CNCSimulatorApp {
 
         this.buildScene();
 
-        this.vrControllers = new VRControllers(this.renderer, this.scene);
+        this.vrControllers = new VRControllers(this.renderer, this.scene, this.camera);
         this.vrInteraction = new VRInteraction(this.scene, this.camera, this.vrControllers);
 
         if (this.controlPanel) {
