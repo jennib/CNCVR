@@ -1,0 +1,33 @@
+{
+  "name": "cnc-simulator-vr",
+  "version": "1.0.0",
+  "description": "WebXR-based 5-axis CNC machine simulator for Quest 2/3",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "lil-gui": "^0.19.0",
+    "three": "^0.160.0",
+    "three-bvh-csg": "^0.0.16",
+    "three-mesh-bvh": "^0.7.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^1.0.2",
+    "vite": "^5.0.0"
+  },
+  "keywords": [
+    "cnc",
+    "simulator",
+    "vr",
+    "webxr",
+    "quest",
+    "three.js",
+    "5-axis"
+  ],
+  "author": "",
+  "license": "MIT"
+}
