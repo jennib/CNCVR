@@ -147,7 +147,86 @@ export class TrunnionTable extends THREE.Group {
         const rim = new THREE.Mesh(rimGeo, platterMat);
         rim.rotation.x = -Math.PI / 2;
         rim.position.y = platterHeight + 0.005;
-        this.platformGroup.add(rim);
+        // Create Vise
+        this.createVise();
+    }
+
+    createVise() {
+        const viseGroup = new THREE.Group();
+        // Sits on top of platter (Height 0.08)
+        viseGroup.position.set(0, 0.08, 0);
+
+        // Materials
+        const viseBodyMat = new THREE.MeshStandardMaterial({
+            color: 0x3a5a8c, // "Kurt Blue"
+            roughness: 0.6,
+            metalness: 0.3
+        });
+        const steelMat = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
+            roughness: 0.3,
+            metalness: 0.8
+        });
+        const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+
+        // 1. Vise Base/Body
+        const baseWidth = 0.16;
+        const baseHeight = 0.05;
+        const baseLength = 0.35;
+        const baseGeo = new THREE.BoxGeometry(baseWidth, baseHeight, baseLength);
+        const base = new THREE.Mesh(baseGeo, viseBodyMat);
+        base.position.y = baseHeight / 2;
+        viseGroup.add(base);
+
+        // 1b. Bed Ways (Shiny top part of base)
+        const waysGeo = new THREE.BoxGeometry(baseWidth * 0.9, 0.005, baseLength);
+        const ways = new THREE.Mesh(waysGeo, steelMat);
+        ways.position.y = baseHeight + 0.0025;
+        viseGroup.add(ways);
+
+        // 2. Fixed Jaw (Rear)
+        // Solid block part of body + Steel Jaw Plate
+        const jawBlockHeight = 0.08;
+        const jawBlockDepth = 0.06;
+        const fixedBlockGeo = new THREE.BoxGeometry(baseWidth, jawBlockHeight, jawBlockDepth);
+        const fixedBlock = new THREE.Mesh(fixedBlockGeo, viseBodyMat);
+        fixedBlock.position.set(0, jawBlockHeight / 2 + baseHeight, -baseLength / 2 + jawBlockDepth / 2);
+        viseGroup.add(fixedBlock);
+
+        // Steel Plate
+        const jawPlateGeo = new THREE.BoxGeometry(baseWidth, 0.06, 0.015);
+        const fixedPlate = new THREE.Mesh(jawPlateGeo, steelMat);
+        fixedPlate.position.set(0, jawBlockHeight / 2 + baseHeight + 0.01, -baseLength / 2 + jawBlockDepth + 0.0075);
+        viseGroup.add(fixedPlate);
+
+        // 3. Moving Jaw (Front)
+        const movingBlockGeo = new THREE.BoxGeometry(baseWidth, jawBlockHeight * 0.85, jawBlockDepth);
+        const movingBlock = new THREE.Mesh(movingBlockGeo, viseBodyMat);
+        // Arbitrary position: slightly open
+        const jawPosZ = 0.05;
+        movingBlock.position.set(0, (jawBlockHeight * 0.85) / 2 + baseHeight, jawPosZ);
+        viseGroup.add(movingBlock);
+
+        // Steel Plate
+        const movingPlate = new THREE.Mesh(jawPlateGeo, steelMat);
+        movingPlate.position.set(0, (jawBlockHeight * 0.85) / 2 + baseHeight + 0.01, jawPosZ - jawBlockDepth / 2 - 0.0075);
+        viseGroup.add(movingPlate);
+
+        // 4. Screw / Handle Shaft
+        const screwGeo = new THREE.CylinderGeometry(0.015, 0.015, baseLength * 0.4);
+        const screw = new THREE.Mesh(screwGeo, blackMat);
+        screw.rotation.x = Math.PI / 2;
+        screw.position.set(0, baseHeight / 2, baseLength / 2 + 0.05);
+        viseGroup.add(screw);
+
+        // Handle Hex
+        const hexGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.03, 6);
+        const hex = new THREE.Mesh(hexGeo, steelMat);
+        hex.rotation.x = Math.PI / 2;
+        hex.position.set(0, baseHeight / 2, baseLength / 2 + 0.12);
+        viseGroup.add(hex);
+
+        this.platformGroup.add(viseGroup);
     }
 
     createTSlots(radius, height) {
